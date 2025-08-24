@@ -37,20 +37,21 @@ def secret_sauce(model, model_type, config):
     used-to-be-super-secret-stuff goes here
     """
     model_type = model_type.lower()
+    m = model.lower()
     if model_type == ImageModelType.SDXL.value:
-        if model.lower().contains("lykon"):
+        if "lykon" in m:
             config["max_train_steps"] = 1500
-        elif model.lower().contains("illustrious-xl-early-release-v0"):
+        elif "illustrious-xl-early-release-v0" in m:
             config["max_train_steps"] = 1600
-        elif model.lower().contains("cagliostrolab/animagine-xl-4.0"):
+        elif "cagliostrolab/animagine-xl-4.0" in m:
             config["max_train_steps"] = 2800
-        elif model.lower().contains("femboyslover"):
+        elif "femboyslover" in m:
             config["max_train_steps"] = 2500
-        elif model.lower().contains("fluently"):
+        elif "fluently" in m:
             config["max_train_steps"] = 1600
-        elif model.lower().contains("stabilityai"):
+        elif "stabilityai" in m:
             config["max_train_steps"] = 1800
-        elif model.lower().contains("zenless-lab"):
+        elif "zenless-lab" in m:
             config["max_train_steps"] = 1800
         else:
             config["max_train_steps"] = 1000
