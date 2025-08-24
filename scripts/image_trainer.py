@@ -36,9 +36,10 @@ def secret_sauce(model, model_type, config):
     """
     used-to-be-super-secret-stuff goes here
     """
-    model_type = model_type.lower()
+    mt = getattr(model_type, "value", model_type)
+    mt = str(mt).lower()
     m = model.lower()
-    if model_type == ImageModelType.SDXL.value:
+    if mt == "sdxl":
         if "lykon" in m:
             config["max_train_steps"] = 1500
         elif "illustrious-xl-early-release-v0" in m:
