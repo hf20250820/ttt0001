@@ -6,11 +6,13 @@ Standalone script for image model training (SDXL or Flux)
 import argparse
 import asyncio
 import os
+import shutil
+import stat
 import subprocess
 import sys
-
 import toml
 
+from pathlib import Path
 
 # Add project root to python path to import modules
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -32,7 +34,7 @@ def get_model_path(path: str) -> str:
             return os.path.join(path, files[0])
     return path
 
-def secret_sauce(model, model_type, config):
+def config_train_steps(model, model_type, config):
     """
     used-to-be-super-secret-stuff goes here
     """
@@ -57,33 +59,53 @@ def secret_sauce(model, model_type, config):
         else:
             config["max_train_steps"] = 1000
 
-    config["save_every_n_epochs"] = 2
-
     return config
 
 def create_config(task_id, model, model_type, expected_repo_name):
+    """Get the training data directory"""
+    train_data_dir = train_paths.get_image_training_images_dir(task_id)
+
     """Create the diffusion config file"""
-    config_template_path = train_paths.get_image_training_config_template_path(model_type)
+    config_template_path = train_paths.get_image_training_config_template_path(model_type, train_data_dir)
+    print(f"config_template_path = {config_template_path}")
 
     with open(config_template_path, "r") as file:
         config = toml.load(file)
 
     # Update config
     config["pretrained_model_name_or_path"] = model
-    config["train_data_dir"] = train_paths.get_image_training_images_dir(task_id)
+    config["train_data_dir"] = train_data_dir
     output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir, exist_ok=True)
     config["output_dir"] = output_dir
 
     # custom miner config
-    config = secret_sauce(model, model_type, config)
+    config = config_train_steps(model, model_type, config)
+
+    if model_type == ImageModelType.SDXL.value:
+        config["max_train_steps"] = 2400
+        config["max_train_epochs"] = None
+        config["optimizer_type"] = "AdamW8Bit"
+    else:
+        ### FLUX models that have custom structure
+        if "flux-monochromemanga" in model.lower():
+            config["pretrained_model_name_or_path"] = "/cache/models/dataautogpt3--FLUX-MonochromeManga/FLUX-DEV_MonochromeManga.safetensors"
+        elif "fluxunchained-dev" in model.lower():
+            config["pretrained_model_name_or_path"] = "/cache/models/mhnakif--fluxunchained-dev/fluxunchained-dev-fp16.safetensors"
+
+        config["max_train_steps"] = 240
+        config["max_train_epochs"] = None
+        config["optimizer_type"] = "Lion"
+
+    config["save_every_n_epochs"] = 1
 
     # Save config to file
     config_path = os.path.join(train_cst.IMAGE_CONTAINER_CONFIG_SAVE_PATH, f"{task_id}.toml")
     save_config_toml(config, config_path)
     print(f"Created config at {config_path}", flush=True)
     return config_path
+
 
 def run_training(model_type, config_path):
     print(f"Starting training with config: {config_path}", flush=True)
@@ -96,7 +118,7 @@ def run_training(model_type, config_path):
         "--num_processes", "1",
         "--num_machines", "1",
         "--num_cpu_threads_per_process", "2",
-        f"/app/sd-scripts/{model_type}_train_network.py",
+        f"./sd-scripts/{model_type}_train_network.py",
         "--config_file", config_path
     ]
 
@@ -126,6 +148,15 @@ def run_training(model_type, config_path):
         raise RuntimeError(f"Training subprocess failed with exit code {e.returncode}")
 
 
+
+def _remove_readonly(func, path, exc_info):
+    # Make read-only files writable, then retry
+    if isinstance(exc_info[1], PermissionError):
+        os.chmod(path, stat.S_IWRITE)
+        func(path)
+    else:
+        raise
+
 async def main():
     print("---STARTING IMAGE TRAINING SCRIPT---", flush=True)
     # Parse command line arguments
@@ -143,14 +174,6 @@ async def main():
 
     model_path = train_paths.get_image_base_model_path(args.model)
 
-    # Create config file
-    config_path = create_config(
-        args.task_id,
-        model_path,
-        args.model_type,
-        args.expected_repo_name,
-    )
-
     # Prepare dataset
     print("Preparing dataset...", flush=True)
 
@@ -161,6 +184,14 @@ async def main():
         class_prompt=cst.DIFFUSION_DEFAULT_CLASS_PROMPT,
         job_id=args.task_id,
         output_dir=train_cst.IMAGE_CONTAINER_IMAGES_PATH
+    )
+
+    # Create config file
+    config_path = create_config(
+        args.task_id,
+        model_path,
+        args.model_type,
+        args.expected_repo_name,
     )
 
     # Run training

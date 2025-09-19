@@ -15,12 +15,14 @@ RUN mkdir -p /dataset/configs \
     /dataset/outputs \
     /dataset/images \
     /workspace/scripts \
-    /workspace/core
+    /workspace/core \
+    /workspace/sd-scripts
 
 COPY core /workspace/core
 COPY miner /workspace/miner
 COPY trainer /workspace/trainer
 COPY scripts /workspace/scripts
+COPY sd-scripts /workspace/sd-scripts
 
 RUN chmod +x /workspace/scripts/run_image_trainer.sh
 RUN chmod +x /workspace/scripts/image_trainer.py
