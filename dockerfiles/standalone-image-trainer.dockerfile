@@ -2,6 +2,7 @@ FROM diagonalge/kohya_latest:latest
 
 # Install git (required for pip installations from git repositories)
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+COPY tests/sd-script /app/sd-script
 
 # Install core dependencies from pyproject.toml
 RUN pip install aiohttp pydantic requests toml \
@@ -15,14 +16,12 @@ RUN mkdir -p /dataset/configs \
     /dataset/outputs \
     /dataset/images \
     /workspace/scripts \
-    /workspace/core \
-    /workspace/sd-scripts
+    /workspace/core
 
 COPY core /workspace/core
 COPY miner /workspace/miner
 COPY trainer /workspace/trainer
 COPY scripts /workspace/scripts
-COPY sd-scripts /workspace/sd-scripts
 
 RUN chmod +x /workspace/scripts/run_image_trainer.sh
 RUN chmod +x /workspace/scripts/image_trainer.py

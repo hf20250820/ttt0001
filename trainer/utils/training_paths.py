@@ -22,10 +22,10 @@ def get_image_base_model_path(model_id: str) -> str:
 def get_image_training_images_dir(task_id: str) -> str:
     return str(Path(train_cst.IMAGE_CONTAINER_IMAGES_PATH) / task_id / "img")
 
-def get_image_training_config_template_path(model_type: str, train_data_dir: str) -> str:
+def get_image_training_config_template_path(model_type: str, train_data_dir: str) -> tuple[str, bool]:
     model_type = model_type.lower()
     if model_type == ImageModelType.SDXL.value:
-        prompts_path = os.path.join(train_data_dir, "10_lora style")
+        prompts_path = os.path.join(train_data_dir, "5_lora style")
         prompts = []
         for file in os.listdir(prompts_path):
             if file.endswith(".txt"):
@@ -37,12 +37,12 @@ def get_image_training_config_template_path(model_type: str, train_data_dir: str
         print(f"Styles: {styles}")
 
         if styles:
-            return str(Path(train_cst.IMAGE_CONTAINER_CONFIG_TEMPLATE_PATH) / "base_diffusion_sdxl_style.toml")
+            return str(Path(train_cst.IMAGE_CONTAINER_CONFIG_TEMPLATE_PATH) / "base_diffusion_sdxl_style.toml"), True
         else:
-            return str(Path(train_cst.IMAGE_CONTAINER_CONFIG_TEMPLATE_PATH) / "base_diffusion_sdxl_person.toml")
+            return str(Path(train_cst.IMAGE_CONTAINER_CONFIG_TEMPLATE_PATH) / "base_diffusion_sdxl_person.toml"), False
 
     elif model_type == ImageModelType.FLUX.value:
-        return str(Path(train_cst.IMAGE_CONTAINER_CONFIG_TEMPLATE_PATH) / "base_diffusion_flux.toml")
+        return str(Path(train_cst.IMAGE_CONTAINER_CONFIG_TEMPLATE_PATH) / "base_diffusion_flux.toml"), False
 
 def get_image_training_zip_save_path(task_id: str) -> str:
     return str(Path(train_cst.CACHE_DATASETS_DIR) / f"{task_id}_tourn.zip")

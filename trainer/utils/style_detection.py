@@ -158,7 +158,7 @@ def _create_style_patterns(style: str) -> List[str]:
         'watercolor painting': ['watercolor'],
         'oil painting': ['oil paint', 'oil painted'],
         'acrylic painting': ['acrylic paint', 'acrylic painted'],
-        'pencil sketch': ['pencil drawing', 'pencil sketched'],
+        'pencil sketch': ['pencil drawing', 'pencil sketched', 'pencil'],
         'digital art': ['digital artwork', 'digitally created'],
         'pixel art': ['pixel graphics', '8-bit art', '8 bit art'],  # Removed 'pixelated' to avoid conflict
         'vector art': ['vector graphics', 'vector illustration'],
@@ -192,7 +192,7 @@ def _create_adjective_patterns(style: str) -> List[str]:
         'cubism': ['cubist', 'cubistic'],
         'surrealism': ['surrealist', 'surrealistic'],
         'futurism': ['futurist', 'futuristic'],
-        'realism': ['realist', 'realistic'],
+        'realism': ['realist'],
         'hyperrealism': ['hyperrealistic', 'hyperrealist'],
         'minimalist': ['minimalist', 'minimalistic'],
         'abstract expressionism': ['abstract expressionist', 'abstract expressionistic'],
